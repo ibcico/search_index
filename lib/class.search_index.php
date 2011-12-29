@@ -201,12 +201,15 @@ Class SearchIndex {
 		
 		// remove as much crap as possible
 		$data = strip_tags($data);
-		$data = strtolower($data);
+		
+		
+		$data = mb_convert_case($data, MB_CASE_LOWER, "UTF-8");
+		//$data = strtolower($data);
 		
 		if(!self::is_utf8($data)) {
 			$data = utf8_encode($data);
 		}
-
+		
 		$data = preg_replace('~&#x([0-9a-f]+);~ei', 'chr(hexdec("\\1"))', $data);
 	    $data = preg_replace('~&#([0-9]+);~e', 'chr("\\1")', $data);
 		$data = strip_punctuation($data);
@@ -220,9 +223,8 @@ Class SearchIndex {
 		
 		foreach($words as $word) {
 			$word = trim($word);
-			
 			// exclude words that are too short or too long
-			if(strlen($word) >= (int)Symphony::Configuration()->get('max-word-length', 'search_index') || self::strlen($word) < (int)Symphony::Configuration()->get('min-word-length', 'search_index')) {
+			if(mb_strlen($word, "UTF-8") >= (int)Symphony::Configuration()->get('max-word-length', 'search_index') || self::strlen($word) < (int)Symphony::Configuration()->get('min-word-length', 'search_index')) {
 				continue;
 			}
 			
@@ -510,10 +512,11 @@ Class SearchIndex {
 		$keywords_manipulated = '';
 		
 		foreach($keywords as $word) {
+			$word = urldecode($word);
 			$boolean_characters = array();
 			preg_match('/^(\-|\+)/', $word, $boolean_characters);
-			$word = strtolower(trim(preg_replace('/^(\-|\+)/', '', $word)));
-			
+			//$word = strtolower(trim(preg_replace('/^(\-|\+)/', '', $word)));
+			$word = mb_convert_case(trim(preg_replace('/^(\-|\+)/', '', $word)), MB_CASE_LOWER, "UTF-8");
 			foreach($synonyms as $synonym) {
 				$synonym_terms = explode(',', $synonym['synonyms']);
 				foreach($synonym_terms as $s) {
@@ -609,7 +612,6 @@ Class SearchIndex {
 	}
 	
 	public static function parseKeywordString($keywords, $stem_words=FALSE) {
-		
 		if($stem_words) require_once(EXTENSIONS . '/search_index/lib/class.porterstemmer.php');
 		
 		// we will store the various keywords under these categories
@@ -640,7 +642,8 @@ Class SearchIndex {
 			$keywords = str_replace($matches[0], '', $keywords);
 		}
 		
-		$keywords = strtolower(preg_replace("/[ ]+/", " ", $keywords));
+		//$keywords = strtolower(preg_replace("/[ ]+/", " ", $keywords));
+		$keywords = preg_replace("/[ ]+/", " ", $keywords);
 		$keywords = trim($keywords);
 		$keywords = explode(' ', $keywords);
 		
@@ -708,7 +711,7 @@ Class SearchIndex {
 	
 	public static function strlen($str) {
 		if(function_exists('mb_strlen')) {
-			return mb_strlen($str);
+			return mb_strlen($str, 'UTF-8');
 		} else {
 			return strlen($str);
 		}

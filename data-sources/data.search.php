@@ -427,7 +427,6 @@
 						$field_pool[$field_id]->appendFormattedElement($entry_xml, $values, FALSE, NULL, $e->get('id'));
 					}
 				}
-				
 				$result->appendChild($entry_xml);
 			}
 			
